@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Step from "../model/Step";
-import { getConfiguratorSteps } from "../logic/ConfiguratorSteps";
+import { getConfiguratorSteps } from "../logic/configuratorSteps";
 
 export const useSteps = () => {
   const [steps, setSteps] = useState<Step[]>(getConfiguratorSteps());
@@ -23,19 +23,21 @@ export const useSteps = () => {
   };
 
   const setCurrentStepCompletable = () => {
-    setSteps(prevSteps => prevSteps.map(step => {
-        if (step.number === currentStep){
-            step.makeCompletable();
+    setSteps((prevSteps) =>
+      prevSteps.map((step) => {
+        if (step.number === currentStep) {
+          step.makeCompletable();
         }
         return step;
-    }))
-  }
+      })
+    );
+  };
 
   return {
     steps,
     currentStep,
     navigateNext,
     navigatePrevious,
-    setCurrentStepCompletable
+    setCurrentStepCompletable,
   };
 };
