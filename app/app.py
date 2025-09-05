@@ -195,6 +195,7 @@ def generate_graph():
 
 @app.route('/download-edge-list', methods=['GET'])
 def download_edge_list():
+    # TODO: eliminare
     # global Graph
     # Graph.graph['type'] is always consistent because the edgelist can only be downloaded if the graph has been recently generated
     # Validate that a graph exists
@@ -238,6 +239,7 @@ def download_edge_list():
 
 @app.route('/download-matrix', methods=['GET'])
 def download_matrix():
+    # TODO: eliminare
     # global Graph
     # Graph.graph['type'] is always consistent because the adjmatrix can only be downloaded if the graph has been recently generated
     # data = json.request
@@ -313,7 +315,7 @@ def run_simulation():
     Graph.add_edges_from(form_data.get('edges', []))
     Graph.graph['type'] = form_data.get('graph_type', 'erdos_renyi') # 'erdos_renyi' or other types
     """
-    global model
+    global model  # TODO: eliminare se si passa lo stato e grafo direttamnete da frontend e si ricostruisce il modello
     form_data = request.form.to_dict()
     files = request.files 
     # Clean up old simulations before running new one
@@ -521,7 +523,7 @@ def continue_simulation():
     - 'sim_id': unique identifier for the simulation
     """
     # Use the global graph variable
-    global model
+    global model # TODO: da eliminare se si passa direttamente lo stato e si ricostruisce il modello
 
     data = request.json
     runSimulationOption = (data['runSimulationOption'])
@@ -596,7 +598,7 @@ def continue_simulation():
     # Model Configuration
     model, params = config_model(
         graph=Graph, initial_status=initial_status,
-        params=params, sim_path=sim_path
+        params=params, sim_path=sim_path, new_sim=False
     )
 
     model.system_status = system_status  # Set the existing system status to the model
