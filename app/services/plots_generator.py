@@ -81,9 +81,9 @@ def save_final_plots(system_status: dict, params: dict, PLOT_FOLDER: Optional[st
             opinion_plot_url = os.path.join(PLOT_FOLDER, opinion_evolution_plot_filename)
             od.plot(filename=distribution_plot_url, values='probabilities', stat=True, title=True,
                     figure_size=(10, 6), grid=True,
-                    transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area)
+                    transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area, show=False)
             oe.plot(opinion_plot_url, figure_size=(10, 6), grid=True,
-                    transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area)
+                    transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area, show=False)
         
             response = {
             'opinion_plot_url': f"/plots/{opinion_evolution_plot_filename}",
@@ -95,9 +95,9 @@ def save_final_plots(system_status: dict, params: dict, PLOT_FOLDER: Optional[st
         # generate figure for base64 or svg
         fig_od = od.plot(filename=None, values='probabilities', stat=True, title=True,
                          figure_size=(10, 6), grid=True,
-                         transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area) 
+                         transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area,show=False) 
         fig_oe = oe.plot(filename=None, figure_size=(10, 6), grid=True,
-                         transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area)
+                         transparent_bg=transparent_bg, transparent_plot_area=transparent_plot_area,show=False)
 
     if format == 'base64':
         try:
