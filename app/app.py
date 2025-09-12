@@ -560,7 +560,6 @@ def continue_simulation():
     params = {
         'p_o': float(data.get('po',0.01)),
         'p_p': float(data.get('pp',0.99)),
-        'initialStatus_type': (data.get('initialStatus')),
         'its': int(system_status[-1]['iteration']),  # number of iterations (updated if iteration_bunch option is selected). This is the default value, can be changed in the frontend
         'lambda_values': float(data.get('lambdaValue')),
         'phi_values': float(data.get('phiValue')),
@@ -575,9 +574,6 @@ def continue_simulation():
     
     if params['p_p'] < 0 or params['p_p'] > 1:
         raise ValidationError(f"Parameter 'p_p' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_p")
-
-    if not params['initialStatus_type']:
-        raise ValidationError("Initial status type not specified in form data for running simulation", field="initialStatus_type")
 
     if params['lambda_values'] < 0.0 or params['lambda_values'] > 1.0:
         raise ValidationError(f"Parameter 'lambda_values' in form data for running simulation must be >= 0.0 and <= 1.0.", field="lambda_values")
