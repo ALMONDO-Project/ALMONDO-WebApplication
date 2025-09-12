@@ -1,9 +1,9 @@
 import ndlib.models.ModelConfig as mc
 from almondo_model import AlmondoModel, ALMONDOSimulator, OpinionDistribution, OpinionEvolution
 from services.metrics_and_statistics import *
-from services.conformity_scores import probabilities_clustering, compute_conformity_scores, plot_conformity_distribution, compute_conformity_scores_opinion
 from almondo_model.functions.utils import transform
-from services.file_manager import save_conformity_plots
+from services.plots_generator import save_conformity_plots
+from services.lobbyists_strategies_management import create_strategies
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
@@ -55,6 +55,8 @@ with open(os.path.join(path, 'initial_config.json'), 'w') as f:
 
 
 simulator = ALMONDOSimulator(**params, verbose=False)
+# if simulator.n_lobbyists > 0:
+    # create_strategies(lobbyists_data=simulator.lobbyists_data, sim_path =path, n_lobbyists=simulator.n_lobbyists)  # Generate strategies for lobbyists if any exist
 print(f'Starting configuration lambda={params["lambda_values"][0]}, phi={params["phi_values"][0]}')
 simulator.config_path = os.path.join(simulator.scenario_path, f'{params["lambda_values"][0]}_{params["phi_values"][0]}')
 os.makedirs(simulator.config_path, exist_ok=True)
@@ -167,10 +169,18 @@ for run in range(params['nruns']):
     print('Computing statistics and metrics...')
     node_id = 10
     it = -1
-    graph_metrics, error_basic = graph_basic_metrics(graph=G)
-    node_info, error_node = get_node_info(graph=G, model=simulator.model, node_id = 10, it=it,betweeness=False)
-    opinion_statistics, error_stats = get_opinion_statistics(model=simulator.model, it=it)
-    opinion_metrics, error_metrics = calculate_opinion_metrics(model=simulator.model, it=it)
+    prior_probabilities = {'p_o':simulator.p_o, 'p_p':simulator.p_p}
+    if simulator.n_lobbyists > 0:
+        lobb_models = [simulator.lobbyists_data[id]['m'] for id in range(simulator.n_lobbyists)]
+    else:
+        lobb_models = []
+    
+    graph_metrics = graph_basic_metrics(graph=G)
+    node_info = get_node_info(graph=G, system_status=simulator.system_status, 
+                              prior_prob=prior_probabilities,  node_id = 10, it=it, betweeness=False)
+    opinion_statistics = get_opinion_statistics(system_status=simulator.system_status, prior_prob=prior_probabilities, it=it)
+    opinion_metrics = calculate_opinion_metrics(system_status=simulator.system_status, prior_prob=prior_probabilities, 
+                                                it=it, lobb_models_list=lobb_models)
 
     
 
@@ -195,8 +205,10 @@ for run in range(params['nruns']):
     #    system_status = json.load(file)
     
     # Calculate conformity scores
- 
-    node_conformity_dict, error = calculate_conformity_scores(graph = G, model = simulator.model, it=-1, mode = 'both', dist_threshold= 0.01)
+    
+    node_conformity_dict = calculate_conformity_scores(graph = G, system_status=simulator.system_status, 
+                                                       prior_prob=prior_probabilities, it=it, 
+                                                       mode = 'both', dist_threshold= 0.01)
 
     # node_conformity_dict = {'prob_clusters': {}, 'ops_label': {}}
     """"
@@ -270,13 +282,7 @@ for run in range(params['nruns']):
                         'error': 'Error in calculating conformity score: no output'}
         print(response)
         continue
-    # Handle errors
-    if error:
-        response = {'success': False, 
-                        'msg': 'Error in calculating conformity score',
-                        'error': error}
-        print(response)
-        continue
+
     # generate plots
     format_plot_output = 'png'
     if format_plot_output == 'png':  # Save plots in PNG format
@@ -284,77 +290,48 @@ for run in range(params['nruns']):
             plot_dict = save_conformity_plots(node_conformity_dict, it=simulator.model.system_status[it]['iteration'], 
                                               PLOT_FOLDER = plot_dir, format='png')
             if plot_dict is None or not plot_dict["conformity_plot_url"] or not plot_dict["conformity_ops_label_plot_url"]:
-                print(f"Error generating plots for sim_id run{run}")
-                response = {
-                    'success': False,
-                    'message': 'An error occurred while generating plots for current simulation.',
-                    'error': 'An error occurred while generating plots for current simulation.'
-                }
+                print(f"Error generating conformity plots for sim_id run {run}")
             else:
                 conformity_plot_url = f'run{run}/{plot_dict["conformity_plot_url"]}' if node_conformity_dict['prob_clusters'] else ''
                 conformity_opinion_label_plot_url = f'run{run}/{plot_dict["conformity_ops_label_plot_url"]}' if node_conformity_dict['ops_label'] else ''
-                response = {
-                    'success': True,
+                print({ 'success': True,
                     'conformity_plot_url': conformity_plot_url,
                     'conformity_opinion_label_plot_url': conformity_opinion_label_plot_url,
                     'simulation_id': f'run{run}'
-                }
+                })
         except Exception as e:
-            print(f"Error generating plots for sim_id run{run}: {e}")
-            response = {
-                'success': False,
-                'message': 'An error occurred while generating plots for current simulation.',
-                'error': str(e)
-            }
+            print(f"Error generating conformity plots for sim_id run{run}: {e}")
         
     elif format_plot_output == 'base64':
         try:
             plot_dict = save_conformity_plots(node_conformity_dict, it=simulator.model.system_status[it]['iteration'], 
                                               PLOT_FOLDER = plot_dir, format='base_64')
             if not plot_dict["conformity_plot_url"] or not plot_dict["conformity_ops_label_plot_url"]:
-                print(f"Error generating plots for sim_id run{run}")
-                response = {
-                    'success': False,
-                    'message': 'An error occurred while generating plots for current simulation.',
-                    'error': 'An error occurred while generating plots for current simulation.'
-                }
+                print(f"Error generating conformity plots for sim_id run{run}")
+
             else:
-                response = {
+                print({
                     'success': True,
                     'conformity_plot_url': plot_dict["conformity_plot_url"],
                     'conformity_opinion_label_plot_url': plot_dict["conformity_ops_label_plot_url"],
                     'simulation_id': f'run{run}'
-                }
+                })
         except Exception as e:
             print(f"Error generating plots for sim_id run{run}: {e}")
-            response = {
-                'success': False,
-                'message': 'An error occurred while generating plots for current simulation.',
-                'error': str(e)
-            }
+            
     elif format_plot_output == 'svg':
         try:
             plot_dict = save_conformity_plots(node_conformity_dict, it=simulator.model.system_status[it]['iteration'], 
                                               PLOT_FOLDER = plot_dir, format='svg')
             if not plot_dict["conformity_plot_url"] or not plot_dict["conformity_ops_label_plot_url"]:
                 print(f"Error generating plots for sim_id run{run}")
-                response = {
-                    'success': False,
-                    'message': 'An error occurred while generating plots for current simulation.',
-                    'error': 'An error occurred while generating plots for current simulation.'
-                }
+
             else:
-                response = {
+                print({
                     'success': True,
                     'conformity_plot_svg': plot_dict["conformity_plot_svg"],
                     'conformity_opinion_label_plot_svg': plot_dict["conformity_opinion_label_plot_svg"],
                     'simulation_id': f'run{run}'
-                }
+                }) 
         except Exception as e:
             print(f"Error generating plots for sim_id run{run}: {e}")
-            response = {
-                'success': False,
-                'message': 'An error occurred while generating plots for current simulation.',
-                'error': str(e)
-            }
-    print(response)
