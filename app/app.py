@@ -13,8 +13,11 @@ from services.graph_generator import generate_graph_fcn
 from services.initial_status_generator import generate_initial_status
 from services.model_configuration import config_model
 from services.metrics_and_statistics import graph_basic_metrics, get_node_info, get_opinion_statistics, calculate_opinion_metrics, calculate_conformity_scores
+from flask_cors import CORS
 import json
 import sys
+import csv
+import copy
 
 # You can set the environment using in the terminal:
 #  export FLASK_CONFIG=production
@@ -67,6 +70,7 @@ def create_app(config_name=None):
 
 # Create app instance
 app = create_app(config_name='development')
+CORS(app)
 configure_logging(app)  # 
 logger = logging.getLogger(__name__) # 
 
@@ -287,6 +291,73 @@ def download_matrix():
     except Exception as e:
         raise ConfigurationError(f"Failed to generate adjacency matrix: {e}")
 
+@app.route('/load-simulation', methods=['POST'])
+def load_simulation():
+    """ Accepts the 'sim_id' parameter from frontend: this parameter specifies the id of the simulation to load"""
+    sim_id = request.form['sim_id']
+    sim_path = os.path.join(current_app.config['RESULTS_FOLDER'], sim_id)
+
+    edges_list = []
+
+    with open(sim_path + '/graph.csv', mode='r') as f:
+        edges = csv.reader(f)
+        for edge in edges:
+            edges_list.append((int(edge[0]), int(edge[1])))
+    
+    # Recreate graph and assing it to global variable
+    global Graph
+    global model
+
+    Graph = nx.Graph()
+    Graph.add_edges_from(edges_list)
+    Graph.graph['type'] = 'edgelist'
+
+    nodes = [{'id': str(node)} for node in Graph.nodes()]
+    links = [{'source': str(edge[0]), 'target': str(edge[1])} for edge in Graph.edges()]
+
+    # Retrieve system status and model parameters
+
+    with open(sim_path + '/status.json', 'r') as f:
+        system_status = json.load(f)
+    
+    with open(sim_path + '/config.json', 'r') as f:
+        params = json.load(f)
+    
+    initial_status = list(system_status[-1]['status'].values())
+
+    # Model Configuration
+    m, params = config_model(
+        graph=Graph, initial_status=initial_status,
+        params=params, sim_path=sim_path, files={}, new_sim=False
+    )
+
+    m.system_status = system_status
+    m.actual_iteration = system_status[-1]['iteration']
+
+    model=m
+
+    transformed_sys_status = copy.deepcopy(m.system_status)
+
+    for status in transformed_sys_status:
+        it_status = status['status']
+
+        for agent in list(it_status.keys()):
+            it_status[agent] = params['p_o'] * it_status[agent] + params['p_p'] * (1 - it_status[agent])
+
+    return jsonify(
+        {
+            'success': True,
+            'nodes': nodes,
+            'links': links,
+            'sim_params': params,
+            'sim_results': transformed_sys_status,
+            'simulation_id': sim_id
+        }
+    )
+
+@app.route('/simulations-ids')
+def get_simulations_IDs():
+    return os.listdir(current_app.config['RESULTS_FOLDER'])
 
 @app.route('/run-simulation', methods=['POST'])
 def run_simulation():
@@ -423,12 +494,25 @@ def run_simulation():
     current_app.logger.info('Saving results...')
     save_system_status(system_status=model.system_status, path=sim_path)
 
-    return jsonify({
-                'success': True,
-                'sim_params': params,
-                'sim_results': model.system_status,
-                'simulation_id': sim_id
-            })
+    # Transform weights into probabilities for each iteration of system status
+    transformed_sys_status = copy.deepcopy(model.system_status)
+
+    for status in transformed_sys_status:
+        it_status = status['status']
+
+        for agent in list(it_status.keys()):
+            it_status[agent] = params['p_o'] * it_status[agent] + params['p_p'] * (1 - it_status[agent])
+
+
+    return jsonify(
+        {
+            'success': True,
+            'message': 'Simulation run successfully.',
+            'sim_params': params,
+            'sim_results': transformed_sys_status,
+            'simulation_id': sim_id
+        }
+    )
     
 @app.route('/generate-simulation-plots', methods=['POST'])
 def generate_simulation_plots():
@@ -524,13 +608,13 @@ def continue_simulation():
     """
     # Use the global graph variable
     global model # TODO: da eliminare se si passa direttamente lo stato e si ricostruisce il modello
+    global Graph
 
-    data = request.json
-    runSimulationOption = (data['runSimulationOption'])
-    iterations = (data['iterations'])
+    runSimulationOption = request.form['runSimulationOption']
+    iterations = int(request.form['iterations'])
     # Get sim_id from frontend request
     # sim_id = current_app.simulations.get_sim_id(session_id)
-    sim_id = data['simulation_id']
+    sim_id = request.form['simulation_id']
     sim_path = os.path.join(current_app.config['RESULTS_FOLDER'], sim_id)
     # format_plot_output = 'base64'  # Default format for plots, can be changed to 'png' if needed (static plots)
     
@@ -555,57 +639,56 @@ def continue_simulation():
     if Graph is None:
         raise ConfigurationError("Graph not generated! Please generate a graph before continuing a simulation...")
 
-
-    system_status = json.loads(data.get('system_status', []))
-    params = {
-        'p_o': float(data.get('po',0.01)),
-        'p_p': float(data.get('pp',0.99)),
-        'initialStatus_type': (data.get('initialStatus')),
-        'its': int(system_status[-1]['iteration']),  # number of iterations (updated if iteration_bunch option is selected). This is the default value, can be changed in the frontend
-        'lambda_values': float(data.get('lambdaValue')),
-        'phi_values': float(data.get('phiValue')),
-        'model_seed': int(data.get('modelSeed', 42)),  # Default seed is 42
-        'n_lobbyists': 0, # int(data.get('n_lobbyists', 0)),  to avoid overwriting of strategies
-        'lobbyists_data': json.loads(data.get('lobbyists_data', []))  # Default to empty list of dictionaries if not specified
-    }
+    # system_status = json.loads(data.get('system_status', []))
+    # params = {
+    #     'p_o': float(data.get('po',0.01)),
+    #     'p_p': float(data.get('pp',0.99)),
+    #     'initialStatus_type': (data.get('initialStatus')),
+    #     'its': int(system_status[-1]['iteration']),  # number of iterations (updated if iteration_bunch option is selected). This is the default value, can be changed in the frontend
+    #     'lambda_values': float(data.get('lambdaValue')),
+    #     'phi_values': float(data.get('phiValue')),
+    #     'model_seed': int(data.get('modelSeed', 42)),  # Default seed is 42
+    #     'n_lobbyists': 0, # int(data.get('n_lobbyists', 0)),  to avoid overwriting of strategies
+    #     'lobbyists_data': json.loads(data.get('lobbyists_data', []))  # Default to empty list of dictionaries if not specified
+    # }
     # Validate parameters
-    if params['p_o'] < 0 or params['p_o'] > 1:
-        raise ValidationError(f"Parameter 'p_o' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_o")
+    # if params['p_o'] < 0 or params['p_o'] > 1:
+    #     raise ValidationError(f"Parameter 'p_o' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_o")
         
     
-    if params['p_p'] < 0 or params['p_p'] > 1:
-        raise ValidationError(f"Parameter 'p_p' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_p")
+    # if params['p_p'] < 0 or params['p_p'] > 1:
+    #     raise ValidationError(f"Parameter 'p_p' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_p")
 
-    if not params['initialStatus_type']:
-        raise ValidationError("Initial status type not specified in form data for running simulation", field="initialStatus_type")
+    # if not params['initialStatus_type']:
+    #     raise ValidationError("Initial status type not specified in form data for running simulation", field="initialStatus_type")
 
-    if params['lambda_values'] < 0.0 or params['lambda_values'] > 1.0:
-        raise ValidationError(f"Parameter 'lambda_values' in form data for running simulation must be >= 0.0 and <= 1.0.", field="lambda_values")
+    # if params['lambda_values'] < 0.0 or params['lambda_values'] > 1.0:
+    #     raise ValidationError(f"Parameter 'lambda_values' in form data for running simulation must be >= 0.0 and <= 1.0.", field="lambda_values")
 
-    if params['phi_values'] < 0.0 or params['phi_values'] > 1.0:
-        raise ValidationError(f"Parameter 'phi_values' in form data for running simulation must be >= 0.0 and <= 1.0.", field="phi_values")
+    # if params['phi_values'] < 0.0 or params['phi_values'] > 1.0:
+    #     raise ValidationError(f"Parameter 'phi_values' in form data for running simulation must be >= 0.0 and <= 1.0.", field="phi_values")
 
-    if params['n_lobbyists'] < 0:
-        raise ValidationError("Number of lobbyists cannot be negative in form data for running simulation", field="n_lobbyists")
+    # if params['n_lobbyists'] < 0:
+    #     raise ValidationError("Number of lobbyists cannot be negative in form data for running simulation", field="n_lobbyists")
 
     
-    # Generate initial status
-    initial_status = system_status[-1]['status']
+    # # Generate initial status
+    # initial_status = system_status[-1]['status']
 
-    if initial_status is None:
-        raise ConfigurationError("Initial status generation failed: initial_status variable is empty.")
+    # if initial_status is None:
+    #     raise ConfigurationError("Initial status generation failed: initial_status variable is empty.")
 
-    # Model Configuration
-    model, params = config_model(
-        graph=Graph, initial_status=initial_status,
-        params=params, sim_path=sim_path, new_sim=False
-    )
+    # # Model Configuration
+    # model, params = config_model(
+    #     graph=Graph, initial_status=initial_status,
+    #     params=params, sim_path=sim_path, new_sim=False
+    # )
 
-    model.system_status = system_status  # Set the existing system status to the model
-    model.actual_iteration = system_status[-1]['iteration']
+    # model.system_status = system_status  # Set the existing system status to the model
+    # model.actual_iteration = system_status[-1]['iteration']
 
-    if model is None:
-        raise ConfigurationError("Model configuration generation failed: model variable is empty.")
+    # if model is None:
+    #     raise ConfigurationError("Model configuration generation failed: model variable is empty.")
 
     # current_app.simulations.update_model(session_id, model)
 
@@ -654,11 +737,19 @@ def continue_simulation():
     # Save final result
     current_app.logger.info('Saving results...')
     save_system_status(system_status=model.system_status, path=sim_path)
+
+    transformed_sys_status = copy.deepcopy(model.system_status)
+
+    for status in transformed_sys_status:
+        it_status = status['status']
+
+        for agent in list(it_status.keys()):
+            it_status[agent] = params['p_o'] * it_status[agent] + params['p_p'] * (1 - it_status[agent])
     
     return jsonify({
             'success': True,
             'sim_params': params,
-            'sim_results': model.system_status,
+            'sim_results': transformed_sys_status,
             'simulation_id': sim_id
         })
 

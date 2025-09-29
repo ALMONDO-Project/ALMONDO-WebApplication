@@ -4,7 +4,7 @@ import os
 import datetime
 import exceptions.custom_exceptions
 from almondo_model import OpinionDistribution, OpinionEvolution
-from services.conformity_scores import plot_conformity_distribution, create_conformity_distribution_subplots
+from services.Conformity_scores import plot_conformity_distribution, create_conformity_distribution_subplots
 import matplotlib.pyplot as plt
 from typing import Optional
 
