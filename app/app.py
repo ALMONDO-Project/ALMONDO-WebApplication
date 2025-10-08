@@ -770,15 +770,24 @@ def get_basic_info_graph():
     # data = request.get_json(silent=True)
     # session_id = data['session_id']
     # Graph = current_app.simulations.get_graph(session_id)
-    form_data = request.get_json(silent=True)
-    if not form_data:
-        raise ValidationError("Request body in getOpinionDiffusionStatistics() must be valid JSON.", field="body")
+    # form_data = request.get_json(silent=True)
+    graph_type = request.form.get('graph_type')
+    nodes = list(map(int, json.loads(request.form.get('nodes'))))
+    edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), json.loads(request.form.get('edges'))))
+
+    # print("form data:\n", form_data)
+    # if not form_data:
+    #     raise ValidationError("Request body in getOpinionDiffusionStatistics() must be valid JSON.", field="body")
     # try:
-    if form_data.get('nodes') is not None and form_data.get('edges') is not None:
+    # if form_data.get('nodes') is not None and form_data.get('edges') is not None:
+    if nodes is not None and edges is not None:
         Graph = nx.Graph() # nx.DiGraph() for directed graphs
-        Graph.add_nodes_from(form_data.get('nodes', []))
-        Graph.add_edges_from(form_data.get('edges', []))
-        Graph.graph['type'] = form_data.get('graph_type', 'erdos_renyi') # 'erdos_renyi' or other types
+        # Graph.add_nodes_from(form_data.get('nodes', []))
+        # Graph.add_edges_from(form_data.get('edges', []))
+        # Graph.graph['type'] = form_data.get('graph_type', 'erdos_renyi') # 'erdos_renyi' or other types
+        Graph.add_nodes_from(nodes)
+        Graph.add_edges_from(edges)
+        Graph.graph['type'] = graph_type
     else:
         if Graph is None:
             raise ConfigurationError("Graph not generated! Please generate a graph before getting basic info about the graph...")
@@ -787,7 +796,7 @@ def get_basic_info_graph():
     
     current_app.logger.info("Basic graph metrics calculated successfully.")
     return jsonify({'success': True, 
-                'msg': 'Basic graph metrics calculated successfully.', 
+                'message': 'Basic graph metrics calculated successfully.', 
                 'graph_basic_info': graph_basic_info}), 200
 
     
@@ -830,13 +839,13 @@ def get_basic_info_node():
         node_info = get_node_info(graph=Graph, system_status=system_status, params=params,
                                 node_id=node_id, it=it, betweeness=betweeness)
         response = {'success': True,
-                    'msg': f'Basic context info for node {node_id} fetched successfully.',
+                    'message': f'Basic context info for node {node_id} fetched successfully.',
                     'node_info': node_info,
                     'simulation_id': sim_id}
     else:
         node_info = get_node_info(graph=Graph, node_id=node_id, it=it,betweeness=betweeness)
         response = {'success': True,
-                    'msg': f'Basic context info for node {node_id} fetched successfully.',
+                    'message': f'Basic context info for node {node_id} fetched successfully.',
                     'node_info': node_info}
     # session_id = request_data['session_id']
     # Graph = current_app.simulations.get_graph(session_id)
