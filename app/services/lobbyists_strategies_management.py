@@ -97,7 +97,6 @@ def create_strategies(lobbyists_data: dict, sim_path: str, n_lobbyists: int) -> 
             np.savetxt(path, matrix, fmt="%i")
         else:
             continue
-    #print('Strategies created')  # TODO: Implement logging and remove print statements (put it outside the function)
 
 def read_random_strategy(B: int, strategies_path: str) -> tuple:
     """
