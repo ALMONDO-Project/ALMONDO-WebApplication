@@ -498,10 +498,12 @@ def run_simulation():
     transformed_sys_status = copy.deepcopy(model.system_status)
 
     for status in transformed_sys_status:
+        print('inside loop')
         it_status = status['status']
 
         for agent in list(it_status.keys()):
             it_status[agent] = params['p_o'] * it_status[agent] + params['p_p'] * (1 - it_status[agent])
+            
 
 
     return jsonify(
@@ -607,8 +609,8 @@ def continue_simulation():
     - 'sim_id': unique identifier for the simulation
     """
     # Use the global graph variable
-    global model # TODO: da eliminare se si passa direttamente lo stato e si ricostruisce il modello
-    global Graph
+    # global model # TODO: da eliminare se si passa direttamente lo stato e si ricostruisce il modello
+    # global Graph
 
     runSimulationOption = request.form['runSimulationOption']
     iterations = int(request.form['iterations'])
@@ -629,6 +631,35 @@ def continue_simulation():
     if not sim_id:
         raise ValidationError(f"Continue simulation error: simulation_id from form data is required for continuing simulation.", field="simulation_id")
     
+    edges_list = []
+
+    with open(sim_path + '/graph.csv', mode='r') as f:
+        edges = csv.reader(f)
+        for edge in edges:
+            edges_list.append((int(edge[0]), int(edge[1])))
+    
+    # Recreate graph
+    Graph = nx.Graph()
+    Graph.add_edges_from(edges_list)
+    Graph.graph['type'] = 'edgelist'
+
+    # Retrieve system status and model parameters
+    with open(sim_path + '/status.json', 'r') as f:
+        system_status = json.load(f)
+    
+    with open(sim_path + '/config.json', 'r') as f:
+        params = json.load(f)
+    
+    initial_status = list(system_status[-1]['status'].values())
+
+    # Model Configuration
+    model, params = config_model(
+        graph=Graph, initial_status=initial_status,
+        params=params, sim_path=sim_path, files={}, new_sim=False
+    )
+
+    model.system_status = system_status
+    model.actual_iteration = system_status[-1]['iteration']
     """
     If data_form from frontend provides list of nodes and edges of the current graph, the last can be used to create the graph.
     Graph = nx.Graph() # nx.DiGraph() for directed graphs
@@ -749,6 +780,7 @@ def continue_simulation():
     return jsonify({
             'success': True,
             'sim_params': params,
+            'message': f'simulation {sim_id} successfully continued',
             'sim_results': transformed_sys_status,
             'simulation_id': sim_id
         })
@@ -829,14 +861,25 @@ def get_basic_info_node():
     except (TypeError, ValueError):
         raise ValidationError("betweeness flag in basic_info_node() must be 0 or 1.", field="betweeness")
 
+    graph_type = request_data.get('graph_type')
+    nodes = list(map(int, json.loads(request_data.get('nodes'))))
+    edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), json.loads(request_data.get('edges'))))
+
+    # Recreating Graph
+    Graph = nx.Graph()
+    Graph.add_nodes_from(nodes)
+    Graph.add_edges_from(edges)
+    Graph.graph['type'] = graph_type
+    
     if 'system_status' in request_data.keys():
-        system_status = json.loads(request_data['system_status'])
+        system_status = request_data['system_status']
         params = {
             'p_o': float(request_data.get('p_o', 0.01)),
             'p_p': float(request_data.get('p_p', 0.99))
         }
         sim_id = request_data.get('simulation_id')
-        node_info = get_node_info(graph=Graph, system_status=system_status, params=params,
+
+        node_info = get_node_info(graph=Graph, system_status=system_status, prior_prob=params,
                                 node_id=node_id, it=it, betweeness=betweeness)
         response = {'success': True,
                     'message': f'Basic context info for node {node_id} fetched successfully.',
@@ -986,7 +1029,7 @@ def conformity_score():
         raise ValidationError("iteration in ConformityScore() must be an integer.", field="iteration")
 
     try:
-        system_status = json.loads(request_data['system_status'])
+        system_status = request_data['system_status']
     except (TypeError, ValueError):
         raise ValidationError("system_status in getOpinionDiffusionStatistics() must be valid JSON.", field="system_status")
     try:
@@ -997,13 +1040,15 @@ def conformity_score():
     
     sim_id = str(request_data.get('simulation_id'))
     params = {'p_o':po, 'p_p':pp}
+    nodes = list(map(int, request_data.get('nodes', [])))
+    edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), request_data.get('edges', [])))
     # session_id = request_data['session_id']
     # Graph = current_app.simulations.get_graph(session_id)
     # model = current_app.simulations.get_model(session_id)
     # sim_id = current_app.simulations.get_sim_id(session_id)
     Graph = nx.Graph() # nx.DiGraph() for directed graphs
-    Graph.add_nodes_from(request_data.get('nodes', []))
-    Graph.add_edges_from(request_data.get('edges', []))
+    Graph.add_nodes_from(nodes)
+    Graph.add_edges_from(edges)
     format_plot_output = 'base64'  # Default format for plots, can be changed to 'png' if needed (static plots)
         
     if not sim_id:
@@ -1022,7 +1067,7 @@ def conformity_score():
     - If 'both' mode is selected both conformity measures are computed
     """
     node_conformity_dict = calculate_conformity_scores(graph = Graph, system_status=system_status, prior_prob=params, it=it, 
-                                                              mode = 'both', dist_threshold= 0.01)
+                                                              mode = 'ops_label', dist_threshold= 0.01)
 
     # Check if the conformity scores were calculated successfully
     if not node_conformity_dict:

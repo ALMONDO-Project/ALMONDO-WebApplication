@@ -97,7 +97,7 @@ def get_node_info(graph: nx.Graph, system_status: Optional[dict], prior_prob: Op
     if node_id is None or not isinstance(node_id, int):
          raise ValidationError("Node ID must be a valid integer to get_node_info().", field = 'node_id')
 
-    if node_id not in graph.nodes:
+    if node_id not in list(graph.nodes):
         raise GraphNotFoundError(f"Node ID {node_id} not found in the graph to get_node_info().")
     
     try:
@@ -127,19 +127,25 @@ def get_node_info(graph: nx.Graph, system_status: Optional[dict], prior_prob: Op
         if system_status is None:
             return node_info # "Model not configured or not initialized." --> try except
         params = { 'p_o': prior_prob['p_o'], 'p_p': prior_prob['p_p'] }
-
+        print('Node info:')
+        print('op', prior_prob['p_o'])
+        print('pp', prior_prob['p_p'])
         if not isinstance(it, int) or it < -1 or it >= len(system_status):
             raise ConfigurationError(f"Invalid iteration index in get_node_info(): {it}")
         
         # Check if node exists in model status
         status_snapshot = system_status[it]
-        if node_id not in status_snapshot['status']:
+        if str(node_id) not in status_snapshot['status']:
             # node_info['iteration'] = model.system_status[it]['iteration'] + 1
             raise GraphNotFoundError(f"Node ID {node_id} not found in the model status for iteration {it} in get_node_info().")
 
         # Get the opinion of the node in the specified iteration
-        weight = status_snapshot['status'][node_id]
-        node_info['opinion'] = transform(weight, params['p_o'], params['p_p']) # opt model
+        # weight = status_snapshot['status'][str(node_id)]
+        # node_info['opinion'] = transform(weight, params['p_o'], params['p_p']) # opt model
+        
+        # The status received from frontend has probabilities
+        node_info['opinion'] = status_snapshot['status'][str(node_id)]
+
         if node_info['opinion'] <= 0.33:
             label = 'optimistic'
         elif node_info['opinion'] > 0.66:
