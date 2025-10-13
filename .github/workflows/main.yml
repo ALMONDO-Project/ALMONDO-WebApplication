@@ -45,8 +45,8 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./ALMONDO-WebApplication
-          file: ./ALMONDO-WebApplication/Dockerfile
+          context: ./app
+          file: ./app/Dockerfile
           push: ${{ github.event_name == 'push' }}
           tags: |
             ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:latest
