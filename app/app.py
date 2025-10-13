@@ -498,7 +498,7 @@ def run_simulation():
     transformed_sys_status = copy.deepcopy(model.system_status)
 
     for status in transformed_sys_status:
-        print('inside loop')
+        # print('inside loop')
         it_status = status['status']
 
         for agent in list(it_status.keys()):
