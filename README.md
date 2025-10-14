@@ -16,10 +16,33 @@ The simulator is developed with the Python Flask framework and provides an effec
 - **Result Visualization:**  Generate graphical representation of the simulation results (evolution plot, opinion distribution, ...) for better interpretation of outcomes and save them.
 - **Data Analysis:** Compute metrics and statistics both of the graph (overall and node-based), and simulation results (conformity score, opinion statistics, ...)
 
-## Requirements
-Python 3.x
+## Usage via Docker [Recommended]
+🐳 Run the ALMONDO application with Docker Compose
 
-## Installastion
+To quickly start both the backend and frontend services using Docker Compose:
+```bash
+docker compose up --build
+```
+
+This command will:
+
+- Start all containers defined in docker-compose.yml,
+- Expose the web application on http://localhost:3000 (frontend),
+- Run the backend API on http://localhost:8000.
+
+To run in detached mode (in the background):
+```bash
+docker compose up -d
+```
+
+To stop and remove containers:
+```bash
+docker compose down
+```
+
+## Local Installastion
+
+Requirement: Python 3.x
 
 Clone the repository and install the necessary dependencies:
 
@@ -82,9 +105,6 @@ if __name__ == '__main__':
 ```
 The application information of simulation states and errors both on the terminal and on a `error.log` file.
 In debug mode the information are stored on a `debug.log` file.
-
-### Dockerization
-Added info if required to run the application in a 'non_develop' mode.
 
 ## User Workflow
 ### Step 1: Creating the Agent Network
@@ -169,16 +189,6 @@ The conformity plot can be saved in .png format in the simulation directory, und
 - data/simulation_results/{date_simid}/strategies/: Directory where lobbyists' strategies are stored.
 - data/simulation_results/{date_simid}/plots/: Directory where default figures are stored.
 - data/simulation_results/{date_simid}/graph.csv: File containing the graph of the network.
-
-
-<!---
-Commented part
-
-## Conclusion and Benefits:
-
-Almondo efficiently handle and manage multiple simulation runs, ensuring organized data handling and analysis. It also streamlines agent-based simulations, making complex scenario creation and simulation accessible and efficient. With its intuitive design and advanced features, it serves as a valuable tool for strategic planning, forecasting, and decision-making in various domains. Almondo simplifies scenario simulations, making it an accessible tool for researchers, analysts, and decision-makers.
--->
-
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
