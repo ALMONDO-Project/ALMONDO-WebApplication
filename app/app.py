@@ -803,9 +803,10 @@ def get_basic_info_graph():
     # session_id = data['session_id']
     # Graph = current_app.simulations.get_graph(session_id)
     # form_data = request.get_json(silent=True)
-    graph_type = request.form.get('graph_type')
-    nodes = list(map(int, json.loads(request.form.get('nodes'))))
-    edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), json.loads(request.form.get('edges'))))
+    request_data = request.get_json(silent=True)
+    graph_type = request_data.get('graph_type')
+    nodes = list(map(int, json.loads(request_data.get('nodes'))))
+    edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), json.loads(request_data.get('edges'))))
 
     # print("form data:\n", form_data)
     # if not form_data:
