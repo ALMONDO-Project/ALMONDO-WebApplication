@@ -310,7 +310,7 @@ def load_simulation():
 
     Graph = nx.Graph()
     Graph.add_edges_from(edges_list)
-    Graph.graph['type'] = 'edgelist'
+    
 
     nodes = [{'id': str(node)} for node in Graph.nodes()]
     links = [{'source': str(edge[0]), 'target': str(edge[1])} for edge in Graph.edges()]
@@ -322,6 +322,8 @@ def load_simulation():
     
     with open(sim_path + '/config.json', 'r') as f:
         params = json.load(f)
+
+    Graph.graph['type'] = params['graph_type']
     
     initial_status = list(system_status[-1]['status'].values())
 
@@ -400,6 +402,8 @@ def run_simulation():
     # Retrieve parameters from the form
     runSimulationOption = (form_data.get('runSimulationOption'))
     params = {
+        'graph_type': form_data.get('graph_type'),
+        'graph_params': json.loads(form_data.get('graph_params')),
         'p_o': float(form_data.get('po',0.01)),
         'p_p': float(form_data.get('pp',0.99)),
         'initialStatus_type': (form_data.get('initialStatus')),
@@ -414,7 +418,6 @@ def run_simulation():
     if params['p_o'] < 0 or params['p_o'] > 1:
         raise ValidationError(f"Parameter 'p_o' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_o")
         
-    
     if params['p_p'] < 0 or params['p_p'] > 1:
         raise ValidationError(f"Parameter 'p_p' in form data for running simulation must be >= 0.0 and <= 1.0.", field="p_p")
 
@@ -430,6 +433,8 @@ def run_simulation():
     if params['n_lobbyists'] < 0:
         raise ValidationError("Number of lobbyists cannot be negative in form data for running simulation", field="n_lobbyists")
 
+    # Generate the graph using .edgelist file from last generation
+    Graph = nx.read_edgelist(f'../data/uploads/graphs/generated_graphs/{params['graph_type']}.edgelist', delimiter=' ', nodetype=int)
 
     if Graph is None:
         raise ConfigurationError("Graph not generated! Please generate a graph before running a simulation...")
@@ -805,6 +810,8 @@ def get_basic_info_graph():
     # form_data = request.get_json(silent=True)
     request_data = request.get_json(silent=True)
     graph_type = request_data.get('graph_type')
+    print("Graph type:", graph_type)
+    print("Graph nodes:", request_data.get('nodes'))
     nodes = list(map(int, json.loads(request_data.get('nodes'))))
     edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), json.loads(request_data.get('edges'))))
 
@@ -832,7 +839,6 @@ def get_basic_info_graph():
                 'message': 'Basic graph metrics calculated successfully.', 
                 'graph_basic_info': graph_basic_info}), 200
 
-    
 @app.route('/basic-info-node', methods=['POST'])
 def get_basic_info_node():
     """

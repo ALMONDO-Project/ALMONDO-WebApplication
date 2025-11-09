@@ -123,6 +123,7 @@ def generate_graph_fcn(graph_type: str, form_data: dict, files: dict) -> nx.Grap
                 raise ValidationError("No file provided in files form in generate_graph() for adjacency_matrix.", field="file") # ValueError("No edgelist file uploaded.") # ValueError("No adjacency matrix file uploaded.")
 
             adjacency_matrix_file = files['uploaded_adjacency_matrix']
+
             if adjacency_matrix_file.filename == '':
                 raise ValidationError("No file selected in files form in generate_graph() for adjacency_matrix.", field="file")
 
