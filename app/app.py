@@ -401,6 +401,10 @@ def run_simulation():
     # 
     # Retrieve parameters from the form
     runSimulationOption = (form_data.get('runSimulationOption'))
+    modelSeed = form_data.get('modelSeed')
+    if(modelSeed):
+        modelSeed = int(modelSeed)
+
     params = {
         'graph_type': form_data.get('graph_type'),
         'graph_params': json.loads(form_data.get('graph_params')),
@@ -410,7 +414,7 @@ def run_simulation():
         'its': 0,  # number of iterations (updated if iteration_bunch option is selected). This is the default value, can be changed in the frontend
         'lambda_values': float(form_data.get('lambdaValue')),
         'phi_values': float(form_data.get('phiValue')),
-        'model_seed': int(form_data.get('modelSeed', 42)),  # Default seed is 42
+        'model_seed': modelSeed,
         'n_lobbyists': int(form_data.get('n_lobbyists', 0)),  # Default to 0 if not specified
         'lobbyists_data': json.loads(form_data.get('lobbyists_data', '[]'))  # Default to empty list of dictionaries if not specified
     }
