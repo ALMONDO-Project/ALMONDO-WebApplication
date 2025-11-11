@@ -248,8 +248,9 @@ def config_model(graph: nx.Graph, initial_status: list, params: dict, files: Opt
                                         field="lobbyists_data")
                     # Assigning strategies to lobbyists
                 for id in range(n_lobbyists):
-                    strategy_file = params['lobbyists_data'][id].get('strategies', [None])[0]
-                    txt_content = strategy_file.read().decode('utf-8')
+                    lobbyist_model = params['lobbyists_data'][id].get('m')
+                    strategy_file_path = params['lobbyists_data'][id].get('strategies', [None])[0]
+                    txt_content = open(strategy_file_path, 'r', encoding='utf-8').read()
                     # Parse TXT content into strategy matrix
                     strategy_matrix = [[int(cell) for cell in line.split()] for line in txt_content.splitlines()]
                     strategy_matrix = np.array(strategy_matrix)  # Convert to numpy array
@@ -265,7 +266,7 @@ def config_model(graph: nx.Graph, initial_status: list, params: dict, files: Opt
                                             field="strategy_matrix")
 
                     # Add lobbyist with strategy to the model
-                    model.add_lobbyist(m, strategy_matrix)
+                    model.add_lobbyist(lobbyist_model, strategy_matrix)
         
         return model, params
     

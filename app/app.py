@@ -810,8 +810,7 @@ def get_basic_info_graph():
     # form_data = request.get_json(silent=True)
     request_data = request.get_json(silent=True)
     graph_type = request_data.get('graph_type')
-    print("Graph type:", graph_type)
-    print("Graph nodes:", request_data.get('nodes'))
+
     nodes = list(map(int, json.loads(request_data.get('nodes'))))
     edges = list(map(lambda edge: (int(edge[0]), int(edge[1])), json.loads(request_data.get('edges'))))
 
