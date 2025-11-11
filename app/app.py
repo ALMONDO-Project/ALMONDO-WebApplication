@@ -438,7 +438,7 @@ def run_simulation():
         raise ValidationError("Number of lobbyists cannot be negative in form data for running simulation", field="n_lobbyists")
 
     # Generate the graph using .edgelist file from last generation
-    Graph = nx.read_edgelist(f'../data/uploads/graphs/generated_graphs/{params['graph_type']}.edgelist', delimiter=' ', nodetype=int)
+    Graph = nx.read_edgelist(f"../data/uploads/graphs/generated_graphs/{params['graph_type']}.edgelist", delimiter=' ', nodetype=int)
 
     if Graph is None:
         raise ConfigurationError("Graph not generated! Please generate a graph before running a simulation...")
