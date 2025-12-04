@@ -5,7 +5,6 @@ from exceptions.custom_exceptions import AppError, FileUploadError, GraphNotFoun
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import networkx as nx
-from services.simulation_manager import SimulationManager
 from services.file_manager import create_simulation_directory, cleanup_old_simulations 
 from services.file_manager import save_graph_files, save_config, save_system_status
 from services.plots_generator import save_final_plots, save_conformity_plots

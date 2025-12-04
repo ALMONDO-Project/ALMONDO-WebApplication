@@ -3,7 +3,7 @@ from almondo_model.functions import metrics_functions
 import networkx as nx
 import numpy as np
 from almondo_model.functions.utils import transform
-from services.Conformity_scores import probabilities_clustering, compute_conformity_scores, compute_conformity_scores_opinion
+from services.conformity_scores import probabilities_clustering, compute_conformity_scores, compute_conformity_scores_opinion
 from typing import Optional
 from flask import current_app
 from exceptions.custom_exceptions import GraphNotFoundError, ConfigurationError, ValidationError, MetricsError
@@ -446,7 +446,7 @@ def calculate_conformity_scores(graph: nx.Graph, system_status: dict, prior_prob
         try:
             node_conf_ops, global_conf_ops = compute_conformity_scores_opinion(G=graph, probabilities=probabilities, alphas=[1.0])
             # Partition by opinion category
-            node_conf_opt =  {int(i): node_conf_ops[i] for i in np.where(probabilities > 0.33)[0]} #node_conf_ops[np.where(probabilities > 0.33)[0]]
+            node_conf_opt =  {int(i): node_conf_ops[i] for i in np.where(probabilities <= 0.33)[0]} #node_conf_ops[np.where(probabilities > 0.33)[0]]
             # global_conformity_opt = sum(node_conformity_opt.values()) / len(node_conformity_opt)
             node_conf_pess = {int(i): node_conf_ops[i] for i in np.where(probabilities > 0.66)[0]}
             # global_conformity_pess = sum(node_conformity_pess.values()) / len(node_conformity_pess)
