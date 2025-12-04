@@ -201,6 +201,8 @@ def save_config(graph:nx.Graph, params: dict, RESULTS_FOLDER: str = 'simulation_
     Arguments:
     - graph (nx.Graph): The NetworkX graph representing the simulation.
     - params (dict): A dictionary containing model parameters. It includes:
+        - graph_type (string)
+        - graph_params (dict): a dictionary containg the parameters used to generate the graph.
         - p_o (float): The probability of opinion formation.
         - p_p (float): The probability of opinion persistence.
         - lambdaValue (float): The lambda value for the model.

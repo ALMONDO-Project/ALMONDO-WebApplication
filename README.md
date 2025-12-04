@@ -16,10 +16,33 @@ The simulator is developed with the Python Flask framework and provides an effec
 - **Result Visualization:**  Generate graphical representation of the simulation results (evolution plot, opinion distribution, ...) for better interpretation of outcomes and save them.
 - **Data Analysis:** Compute metrics and statistics both of the graph (overall and node-based), and simulation results (conformity score, opinion statistics, ...)
 
-## Requirements
-Python 3.x
+## Usage via Docker [Recommended]
+🐳 Run the ALMONDO application with Docker Compose
 
-## Installastion
+To quickly start both the backend and frontend services using Docker Compose:
+```bash
+docker compose up --build
+```
+
+This command will:
+
+- Start all containers defined in docker-compose.yml,
+- Expose the web application on http://localhost:3000 (frontend),
+- Run the backend API on http://localhost:8000.
+
+To run in detached mode (in the background):
+```bash
+docker compose up -d
+```
+
+To stop and remove containers:
+```bash
+docker compose down
+```
+
+## Local Installastion
+
+Requirement: Python 3.x
 
 Clone the repository and install the necessary dependencies:
 
@@ -82,9 +105,6 @@ if __name__ == '__main__':
 ```
 The application information of simulation states and errors both on the terminal and on a `error.log` file.
 In debug mode the information are stored on a `debug.log` file.
-
-### Dockerization
-Added info if required to run the application in a 'non_develop' mode.
 
 ## User Workflow
 ### Step 1: Creating the Agent Network
@@ -170,27 +190,16 @@ The conformity plot can be saved in .png format in the simulation directory, und
 - data/simulation_results/{date_simid}/plots/: Directory where default figures are stored.
 - data/simulation_results/{date_simid}/graph.csv: File containing the graph of the network.
 
-
-<!---
-Commented part
-
-## Conclusion and Benefits:
-
-Almondo efficiently handle and manage multiple simulation runs, ensuring organized data handling and analysis. It also streamlines agent-based simulations, making complex scenario creation and simulation accessible and efficient. With its intuitive design and advanced features, it serves as a valuable tool for strategic planning, forecasting, and decision-making in various domains. Almondo simplifies scenario simulations, making it an accessible tool for researchers, analysts, and decision-makers.
--->
-
-
-## License
-This project is licensed under XXX.
-
-## Acknowledgements and funding declaration
-This simulator tool was created as part of ongoing research into opinion dynamics and lobbying influence. It relies on `NDlib` Python library for network-based modeling and networkx for graph management. See references for project website.
-
-This study received funding from the European Union - Next-GenerationEU -National Recovery and Resilience Plan (NRRP) – MISSION 4 COMPONENT 2, INVESTMENT N. 1.1, CALL PRIN 2022 PNRR D.D. 1409 14-09-2022 – ALMONDO Project, CUP N. J53D23015400001.
-
-
-## References
+# License
+This project is licensed under the MIT License - see the LICENSE file for details.
+The project requires [NDlib](https://github.com/GiulioRossetti/ndlib), distributed under the BSD 2-Clause "Simplified" License. All modifications and original contributions are provided under MIT.
+ 
+# Acknowledgements and funding declaration
+This simulator was created as part of ongoing research into opinion dynamics and lobbying influence. It relies on NDlib for network-based modeling and networkx for graph management. See references for project website.
+ 
+This study received funding from the European Union - Next-GenerationEU -National Recovery and Resilience Plan (NRRP) – MISSION 4 COMPONENT 2, INVESTMENT N. 1.1, CALL PRIN 2022 PNRR D.D. 1409 14-09-2022 – ALMONDO Project (Analyzing climate Lobbying with a simulation Model based ON Dynamic Opinions), CUP N. J53D23015400001.
+Coordinator: Prof. Daniele Giachini, School of Advanced Studied  Sant'Anna, Pisa (PI), Italy
+ 
+# References
 - Giachini, D., Del Rosso, V., Ciambezi, L., Fornari, F., Pansanella, V., Popoyan, L., & Sîrbu, A. (2025). "Navigating the Lobbying Landscape: Insights from Opinion Dynamics Models." *arXiv preprint arXiv:2507.13767*.
-- User Interface: ALMONDO-WebInterface [https://github.com/ALMONDO-Project/ALMONDO-WebInterface] and repo [https://github.com/ALMONDO-Project/ALMONDO-WebInterface.git]
-- Opinion dynamics model with lobbyists influence: `AlmondoModel` class of the `NDlib` Python library https://github.com/ALMONDO-Project/ALMONDO-Model
-- ALMONDO project website: https://almondo-project.github.io/ 
+- ALMONDO project website: https://almondo-project.github.io/

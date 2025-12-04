@@ -9,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
     ALMONDO_MODEL_REPO="https://github.com/ALMONDO-Project/ALMONDO-Model.git" \
     CONFORMITY_REPO="https://github.com/GiulioRossetti/conformity.git" \
-    CONFORMITY_FALLBACK_REPO="https://github.com/verdiana01/conformity.git"
+    CONFORMITY_FALLBACK_REPO="https://github.com/ALMONDO-Project/conformity.git"
 
 # Create working directory
 WORKDIR /home/almondo

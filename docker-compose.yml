@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  backend:
+    image: ghcr.io/almondo-project/almondo-backend:latest
+    container_name: almondo-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+    # Uncomment if backend needs frontend build artifacts or persistent volume
+    # volumes:
+    #   - ./data:/home/almondo/data
+
+  frontend:
+    image: ghcr.io/almondo-project/almondo-frontend:latest
+    container_name: almondo-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
