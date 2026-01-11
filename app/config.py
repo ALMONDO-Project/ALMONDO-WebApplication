@@ -28,7 +28,7 @@ class Config:
     
     # File configurations
     ALLOWED_EXTENSIONS = {'csv', 'txt', 'json', 'edgelist', 'png', 'jpg', 'jpeg', 'svg'}
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    #MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     
     @staticmethod
     def init_app(app):
