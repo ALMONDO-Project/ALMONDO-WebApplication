@@ -350,6 +350,7 @@ def load_simulation():
             'success': True,
             'nodes': nodes,
             'links': links,
+            'message': f"Simulation {sim_id} successfully loaded.",
             'sim_params': params,
             'sim_results': transformed_sys_status,
             'simulation_id': sim_id
