@@ -3,7 +3,7 @@ from almondo_model.functions import metrics_functions
 import networkx as nx
 import numpy as np
 from almondo_model.functions.utils import transform
-from services.conformity_scores import probabilities_clustering, compute_conformity_scores, compute_conformity_scores_opinion
+from services.Conformity_scores import probabilities_clustering, compute_conformity_scores, compute_conformity_scores_opinion
 from typing import Optional
 from flask import current_app
 from exceptions.custom_exceptions import GraphNotFoundError, ConfigurationError, ValidationError, MetricsError

@@ -9,7 +9,7 @@ import shutil
 import pandas as pd
 from exceptions.custom_exceptions import ValidationError, FileUploadError, SimulationError, GraphNotFoundError, ConfigurationError
 from almondo_model import AlmondoModel, OpinionDistribution, OpinionEvolution
-from services.conformity_scores import plot_conformity_distribution, create_conformity_distribution_subplots
+from services.Conformity_scores import plot_conformity_distribution, create_conformity_distribution_subplots
 import matplotlib.pyplot as plt
 
 def create_simulation_directory(simulation_folder: str = 'data/simulation_results') -> tuple[str, str]:
